@@ -15,20 +15,28 @@ func main() {
 		colly.AllowedDomains("ridge.com"), // Allowed domain, without protocol
 	)
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
+	_, err := getAllSiteMapUrls(c, sitemapLink)
+	
+	if err != nil {
+		log.Fatalf("Error getting links from sitemap: %v\n", err)
+	}
 
-	c.OnError(func(_ *colly.Response, err error) {
-		log.Println("Something went wrong:", err)
-	})
+}
+
+func getAllSiteMapUrls(c *colly.Collector, sitemapLink string) ([]string, error) {
+	urls := []string{}
 
 	c.OnHTML("#sitemap-app-list-wrapper a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		fmt.Println("link:", link)
+		urls = append(urls, link)
 	})
 
-	// Start the collector
-	c.Visit(sitemapLink)
+	err := c.Visit(sitemapLink)
+	if err != nil {
+		return nil, err
+	}
+
+	return urls, nil
 
 }
