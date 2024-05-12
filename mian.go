@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/url"
+	"strings"
 
 	"github.com/gocolly/colly"
 )
@@ -15,11 +17,13 @@ func main() {
 		colly.AllowedDomains("ridge.com"), // Allowed domain, without protocol
 	)
 
-	_, err := getAllSiteMapUrls(c, sitemapLink)
-	
+	urls, err := getAllSiteMapUrls(c, sitemapLink)
+
 	if err != nil {
 		log.Fatalf("Error getting links from sitemap: %v\n", err)
 	}
+
+	fmt.Println("Number of URLs collected:", len(urls))
 
 }
 
@@ -28,11 +32,28 @@ func getAllSiteMapUrls(c *colly.Collector, sitemapLink string) ([]string, error)
 
 	c.OnHTML("#sitemap-app-list-wrapper a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
+		u, err := url.Parse(link)
+
+		if err != nil {
+			return
+		}
+
+		if page := u.Query().Get("page"); page != "" {
+			err := c.Visit(e.Request.AbsoluteURL(e.Attr("href")))
+			if err != nil {
+				log.Printf("Error visiting pagination link %s: %v\n", e.Attr("href"), err)
+			}
+		}
+
 		fmt.Println("link:", link)
-		urls = append(urls, link)
+
+		if !strings.HasPrefix(link, "/tools/sitemap?") {
+			urls = append(urls, link)
+		}
 	})
 
 	err := c.Visit(sitemapLink)
+
 	if err != nil {
 		return nil, err
 	}
