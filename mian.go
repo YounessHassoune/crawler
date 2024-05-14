@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/gocolly/colly"
@@ -22,6 +24,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error getting links from sitemap: %v\n", err)
 	}
+
+	writeUrlsToJson("urls.json", urls)
 
 	fmt.Println("Number of URLs collected:", len(urls))
 
@@ -60,4 +64,18 @@ func getAllSiteMapUrls(c *colly.Collector, sitemapLink string) ([]string, error)
 
 	return urls, nil
 
+}
+
+func writeUrlsToJson(filename string, strings []string) error {
+	jsonData, err := json.Marshal(strings)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filename, jsonData, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
