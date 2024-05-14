@@ -33,6 +33,7 @@ func main() {
 
 func getAllSiteMapUrls(c *colly.Collector, sitemapLink string) ([]string, error) {
 	urls := []string{}
+	visited := make(map[string]bool) // Map to store visited URLs
 
 	c.OnHTML("#sitemap-app-list-wrapper a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
@@ -51,8 +52,9 @@ func getAllSiteMapUrls(c *colly.Collector, sitemapLink string) ([]string, error)
 
 		fmt.Println("link:", link)
 
-		if !strings.HasPrefix(link, "/tools/sitemap?") {
+		if !strings.HasPrefix(link, "/tools/sitemap?") && !visited[link] {
 			urls = append(urls, link)
+			visited[link] = true
 		}
 	})
 
